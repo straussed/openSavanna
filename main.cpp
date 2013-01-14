@@ -25,7 +25,7 @@ int successfull=0;
 
 int xm[4]={0,1,0,-1};
 int ym[4]={-1,0,1,0};
-
+//whatever
 
 #define xDim 256
 #define yDim 256
