@@ -10,7 +10,7 @@
 #include "globalConst.h"
 #include "tHMM.h"
 #include "tAgent.h"
-
+#include "prey.h"
 #define randDouble ((double)rand()/(double)RAND_MAX)
 
 using namespace std;
@@ -20,12 +20,13 @@ double perSiteMutationRate=0.005;
 int update=0;
 int repeats=1;
 int maxAgent=1000;
+int maxFood = 500;
 int totalGenerations=100;
 int successfull=0;
 
 int xm[4]={0,1,0,-1};
 int ym[4]={-1,0,1,0};
-//whatever
+
 
 #define xDim 256
 #define yDim 256
@@ -33,7 +34,6 @@ int ym[4]={-1,0,1,0};
 #define _agent 1
 #define _food 2
 #define _wall 3
-#define _carcass 4
 
 #include <sys/socket.h>       /*  socket definitions        */
 #include <sys/types.h>        /*  socket types              */
@@ -62,9 +62,12 @@ void doBroadcast(string data);
 int main(int argc, char *argv[])
 {
 	vector<tAgent*>agent,birth;
+    vector<prey*>food;
+    prey* preyWho[xDim][yDim];
     tAgent* who[xDim][yDim];
     unsigned char area[xDim][yDim];
 	tAgent *masterAgent;
+    prey *masterPrey;
 	int i,j,k,x,y,action;
 	double maxFitness;
 	int newBorn=0;
@@ -85,17 +88,26 @@ int main(int argc, char *argv[])
             who[i][j]=NULL;
             if(randDouble<0.01)
                 area[i][j]=_wall;
-            else
-                if(randDouble<0.1)
-                    area[i][j]=_food;
+//            else
+//                if(randDouble<0.1){
+//                    area[i][j]=_food;
+//                    food[i] = new prey;
+//                    food[i]->xPos = i;
+//                    food[i]->yPos = j;
+//                    food[i]->capacity = 5;
+//                    preyWho[i][j] = food[i];
+                //}
+            
             if((i==0)||(j==0)||(i==xDim-1)||(j==yDim-1))
                 area[i][j]=_wall;
         }
     }
 	agent.resize(maxAgent);
 	masterAgent=new tAgent;
+    //masterPrey = new prey;
 //	masterAgent->setupRandomAgent(5000);
     masterAgent->loadAgent((char*)"startGenome.txt");
+    //masterPrey->loadPrey((char*)"startGenome.txt");
 	masterAgent->setupPhenotype();
     masterAgent->showPhenotype();
     //exit(0);
@@ -107,13 +119,29 @@ int main(int argc, char *argv[])
         do{
             agent[i]->xPos=rand()%xDim;
             agent[i]->yPos=rand()%yDim;
+            agent[i]->kin_flag = agent[i]->get_random(0,1);
+            agent[i]->kin_thresh = agent[i]->get_random(0,1);
         } while(area[agent[i]->xPos][agent[i]->yPos]!=_empty);
         agent[i]->direction=rand()&3;
-        agent[i]->sex = round(randDouble);
         area[agent[i]->xPos][agent[i]->yPos]=_agent;
         who[agent[i]->xPos][agent[i]->yPos]=agent[i];
         //agent[i]->showPhenotype();
 	}
+    food.resize(maxFood);
+    //Add prey items based on maxFood
+    for(int i=0;i<food.size();i++){
+		food[i]=new prey;
+        //food[i]->inherit(masterPrey,.01,0);
+        do{
+            food[i]->xPos=rand()%xDim;
+            food[i]->yPos=rand()%yDim;
+        } while(area[food[i]->xPos][food[i]->yPos]!=_empty);
+        food[i]->direction=rand()&3;
+        area[food[i]->xPos][food[i]->yPos]=_food;
+        preyWho[food[i]->xPos][food[i]->yPos]=food[i];
+        //agent[i]->showPhenotype();
+	}
+
 	masterAgent->nrPointingAtMe--;
 	cout<<"setup complete"<<endl;
     while(agent.size()>0)
@@ -159,10 +187,13 @@ int main(int argc, char *argv[])
                     case 2: // turn right
                         agent[i]->direction=(agent[i]->direction-1)&3;
                         break;
-                    case 3: //move forward
+                    case 3: //move forward. If food in front, eat food and remain in same position
                         switch(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]){
-                            case _carcass:
+                            case _food:
                                 agent[i]->food++;
+                                preyWho[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]->capacity--;
+                                if(preyWho[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]->capacity == 0)
+                                        
                                 if(agent[i]->food>=5){
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
@@ -174,8 +205,6 @@ int main(int argc, char *argv[])
                                     area[offspring->xPos][offspring->yPos]=_agent;
                                     who[offspring->xPos][offspring->yPos]=offspring;
                                 }
-                            case _food:
-                                area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]] = _carcass;
                             case _empty:
                                 agent[i]->xPos+=xm[agent[i]->direction];
                                 agent[i]->yPos+=ym[agent[i]->direction];
@@ -207,15 +236,20 @@ int main(int argc, char *argv[])
             for(i=0;i<xDim;i++)
                 for(j=0;j<yDim;j++){
                     switch(area[i][j]&3){//change the 3 to add more cases
-                        case _food: sprintf(line,"%i,%i,0,255,0;",i,j); break;
-                        case _carcass: sprintf(line, "%i, %i, 255,0,255", i,j);
+                        case _food: sprintf(line,"%i,%i,34,139,34;",i,j); break;
                         case _agent:
-                            if(who[i][j]->sex == 0)
-                                sprintf(line,"%i,%i,51,102,255;",i,j);
-                            else
+                            if(who[i][j]->kin_flag <= .2)
                                 sprintf(line,"%i,%i,255,0,0;",i,j);
+                            else if (who[i][j]->kin_flag <= .4)
+                                sprintf(line,"%i,%i,255,0,255;",i,j);
+                            else if (who[i][j]->kin_flag <= .6)
+                                sprintf(line,"%i,%i,0,0,255;",i,j);
+                            else if (who[i][j]->kin_flag <= .8)
+                                sprintf(line,"%i,%i,255,215,0;",i,j);
+                            else
+                                sprintf(line,"%i,%i,0,255,255;",i,j);
                             break;
-                                
+                            
                         case _wall: sprintf(line,"%i,%i,255,255,255;",i,j); break;
                         case _empty: break;
                     }

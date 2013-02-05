@@ -9,6 +9,13 @@
 
 #include "tAgent.h"
 
+
+double tAgent::get_random(double min, double max) {
+    /* Returns a random double between min and max */
+    
+    return (max-min) * ((double) rand() / (double) RAND_MAX) + min;
+}
+
 tAgent::tAgent(){
 	int i;
 	nrPointingAtMe=1;
@@ -84,9 +91,12 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
  	vector<unsigned char> buffer;
  	born=theTime;
 	ancestor=from;
+    kin_flag = from->kin_flag;
+    kin_thresh = from->kin_thresh;
+
 	from->nrPointingAtMe++;
     nucleotides=(int)from->genome.size();
-	genome.clear();
+   	genome.clear();
 	genome.resize(nucleotides);
     for(i=0;i<nucleotides;i++)
         if(((double)rand()/(double)RAND_MAX)<mutationRate)
@@ -101,12 +111,39 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 		buffer.clear();
 		buffer.insert(buffer.begin(),genome.begin()+s,genome.begin()+s+w);
 		genome.insert(genome.begin()+o,buffer.begin(),buffer.end());
+      
+        //if genome mutates so do kin variables
+        kin_flag = kin_flag + get_random(-.1, .1);
+        if(kin_flag<0)
+            kin_flag = 0;
+        else if (kin_flag>1)
+            kin_flag = 1;
+        kin_thresh = kin_thresh + get_random(-.1, .1);
+        if(kin_thresh<0)
+            kin_thresh = 0;
+        else if (kin_thresh>1)
+            kin_thresh = 1;
+        
+        
 	}
 	if((((double)rand()/(double)RAND_MAX)<0.02)&&(genome.size()>1000)){
 		//deletion
 		w=15+rand()&511;
 		s=rand()%((int)genome.size()-w);
 		genome.erase(genome.begin()+s,genome.begin()+s+w);
+        
+        //if genome mutates so do kin variables
+        kin_flag = kin_flag + get_random(-.1, .1);
+        if(kin_flag<0)
+            kin_flag = 0;
+        else if (kin_flag>1)
+            kin_flag = 1;
+        kin_thresh = kin_thresh + get_random(-.1, .1);
+        if(kin_thresh<0)
+            kin_thresh = 0;
+        else if (kin_thresh>1)
+            kin_thresh = 1;
+
 	}
 	setupPhenotype();
 	fitness=0.0;

@@ -22,6 +22,8 @@
 
 using namespace std;
 
+
+
 class tDot{
 public:
 	double xPos,yPos;
@@ -45,6 +47,9 @@ public:
 	int born;
     char sex;
     unsigned char nodeMap[256];
+    double kin_flag;
+    double kin_thresh;
+    double get_random(double min, double max);
     
 	tAgent();
 	~tAgent();
@@ -63,7 +68,7 @@ public:
 	void saveToDot(char *filename);
 	void saveToDotFullLayout(char *filename);
     void saveEdgeList(char *filename);
-	
+    	
 	void saveLOD(FILE *statsFile,FILE *genomeFile);
 	void saveGenome(FILE *f);
 };
