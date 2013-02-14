@@ -20,7 +20,7 @@ double perSiteMutationRate=0.005;
 int update=0;
 int repeats=1;
 int maxAgent=1000;
-int maxFood = 500;
+int maxFood = 5000;
 int totalGenerations=100;
 int successfull=0;
 
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
         do{
             food[i]->xPos=rand()%xDim;
             food[i]->yPos=rand()%yDim;
-        } while(area[food[i]->xPos][food[i]->yPos]!=_empty);
+        } while(area[food[i]->xPos][food[i]->yPos] !=_empty);
         food[i]->direction=rand()&3;
         area[food[i]->xPos][food[i]->yPos]=_food;
         preyWho[food[i]->xPos][food[i]->yPos]=food[i];
@@ -188,22 +188,37 @@ int main(int argc, char *argv[])
                         agent[i]->direction=(agent[i]->direction-1)&3;
                         break;
                     case 3: //move forward. If food in front, eat food and remain in same position
-                        switch(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]){
+                        int targ_x = agent[i]->xPos+xm[agent[i]->direction];
+                        int targ_y = agent[i]->yPos+ym[agent[i]->direction];
+                        
+                        switch(area[targ_x][targ_y]){
                             case _food:
                                 agent[i]->food++;
-                                preyWho[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]->capacity--;
-                                if(preyWho[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]->capacity == 0)
+                                //cout << preyWho[targ_x][targ_y] << endl;
+                                preyWho[targ_x][targ_y]->capacity--;
+                                if(preyWho[targ_x][targ_y]->capacity == 0){
+                                    
+                                    //when a carcass is depleted. Still need to delete from food array.
+                                    preyWho[targ_x][targ_y]=NULL;
+                                    area[targ_x][targ_y]=_empty;
+//                                    food[i]->nrPointingAtMe--;
+//                                    if(food[i]->nrPointingAtMe==0)
+//                                        delete food[i];
+//                                    food.erase(food.begin()+i);
+                                }
+
                                         
                                 if(agent[i]->food>=5){
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
-                                    offspring->xPos=agent[i]->xPos;
-                                    offspring->yPos=agent[i]->yPos;
+                                    offspring->xPos=agent[i]->xPos+xm[agent[i]->direction-2];
+                                    offspring->yPos=agent[i]->yPos-ym[agent[i]->direction-2];
                                     offspring->direction=rand()&3;
-                                    agent[i]->food=0;
+                                    agent[i]->food-=5;
                                     birth.push_back(offspring);
                                     area[offspring->xPos][offspring->yPos]=_agent;
                                     who[offspring->xPos][offspring->yPos]=offspring;
+                                    
                                 }
                             case _empty:
                                 agent[i]->xPos+=xm[agent[i]->direction];
@@ -221,12 +236,16 @@ int main(int argc, char *argv[])
         }
         //add newborns to population
         agent.insert(agent.end(), birth.begin(), birth.end());
-        //add food
+//        //add food
         for(i=0;i<10;i++){
             x=2+(rand()%(xDim-4));
             y=2+(rand()%(yDim-4));
-            if(area[x][y]==_empty)
+            if(area[x][y]==_empty){
                 area[x][y]=_food;
+                food.push_back(new prey);
+                preyWho[x][y] = food.back();
+                //cout<< food.back()->capacity << endl;
+            }
         }
         //*
         if((update&15)==0){
@@ -235,7 +254,7 @@ int main(int argc, char *argv[])
             char line[100];
             for(i=0;i<xDim;i++)
                 for(j=0;j<yDim;j++){
-                    switch(area[i][j]&3){//change the 3 to add more cases
+                    switch(area[i][j]&4){//change the 3 to add more cases
                         case _food: sprintf(line,"%i,%i,34,139,34;",i,j); break;
                         case _agent:
                             if(who[i][j]->kin_flag <= .2)

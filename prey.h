@@ -36,7 +36,8 @@ public:
 	//unsigned char states[maxNodes],newStates[maxNodes];
 	double fitness,convFitness;
 	vector<double> fitnesses;
-	int capacity = 5;
+    int maxCapacity = 50;
+	int capacity = maxCapacity;
 	int xPos,yPos,direction;
 	int ID;
 	int born;
