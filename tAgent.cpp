@@ -91,7 +91,9 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
  	vector<unsigned char> buffer;
  	born=theTime;
 	ancestor=from;
-    kin_flag = from->kin_flag;
+    kin_flagR = from->kin_flagR;
+    kin_flagG = from->kin_flagG;
+    kin_flagB = from->kin_flagB;
     kin_thresh = from->kin_thresh;
 
 	from->nrPointingAtMe++;
@@ -112,37 +114,32 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 		buffer.insert(buffer.begin(),genome.begin()+s,genome.begin()+s+w);
 		genome.insert(genome.begin()+o,buffer.begin(),buffer.end());
       
-        //if genome mutates so do kin variables
-        kin_flag = kin_flag + get_random(-.1, .1);
-        if(kin_flag<0)
-            kin_flag = 0;
-        else if (kin_flag>1)
-            kin_flag = 1;
+	}
+    
+    if(((double)rand()/(double)RAND_MAX) <.1){
+        do{
+        kin_flagR = kin_flagR + get_random(-60, 60);
+        }while(kin_flagR > 255 && kin_flagR < 0);
+        do{
+            kin_flagG = kin_flagG + get_random(-60, 60);
+        }while(kin_flagG > 255 && kin_flagG < 0);
+        do{
+            kin_flagB = kin_flagB + get_random(-60, 60);
+        }while(kin_flagB > 255 && kin_flagB < 0);
+            
         kin_thresh = kin_thresh + get_random(-.1, .1);
         if(kin_thresh<0)
             kin_thresh = 0;
         else if (kin_thresh>1)
             kin_thresh = 1;
         
-        
-	}
+    }
+    
 	if((((double)rand()/(double)RAND_MAX)<0.02)&&(genome.size()>1000)){
 		//deletion
 		w=15+rand()&511;
 		s=rand()%((int)genome.size()-w);
 		genome.erase(genome.begin()+s,genome.begin()+s+w);
-        
-        //if genome mutates so do kin variables
-        kin_flag = kin_flag + get_random(-.1, .1);
-        if(kin_flag<0)
-            kin_flag = 0;
-        else if (kin_flag>1)
-            kin_flag = 1;
-        kin_thresh = kin_thresh + get_random(-.1, .1);
-        if(kin_thresh<0)
-            kin_thresh = 0;
-        else if (kin_thresh>1)
-            kin_thresh = 1;
 
 	}
 	setupPhenotype();

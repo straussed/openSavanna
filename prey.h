@@ -36,13 +36,15 @@ public:
 	//unsigned char states[maxNodes],newStates[maxNodes];
 	double fitness,convFitness;
 	vector<double> fitnesses;
-    int maxCapacity = 50;
+    int maxCapacity = 5;
 	int capacity = maxCapacity;
+    int reproRate = 200;
+    int lifespan = 30;
 	int xPos,yPos,direction;
 	int ID;
 	int born;
 //    char sex;
-//    unsigned char nodeMap[256];
+    unsigned char nodeMap[256];
 //    double kin_flag;
 //    double kin_thresh;
 //    double get_random(double min, double max);
@@ -60,7 +62,7 @@ public:
 //	void resetBrain(void);
 	void ampUpStartCodons(void);
 //	void showBrain(void);
-//	void showPhenotype(void);
+	void showPhenotype(void);
 //	void saveToDot(char *filename);
 	//void saveToDotFullLayout(char *filename);
     //void saveEdgeList(char *filename);

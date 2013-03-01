@@ -47,7 +47,9 @@ public:
 	int born;
     char sex;
     unsigned char nodeMap[256];
-    double kin_flag;
+    double kin_flagR;
+    double kin_flagG;
+    double kin_flagB;
     double kin_thresh;
     double get_random(double min, double max);
     
