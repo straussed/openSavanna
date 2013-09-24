@@ -16,6 +16,7 @@ double tAgent::get_random(double min, double max) {
     return (max-min) * ((double) rand() / (double) RAND_MAX) + min;
 }
 
+
 tAgent::tAgent(){
 	int i;
 	nrPointingAtMe=1;
@@ -95,6 +96,7 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
     kin_flagG = from->kin_flagG;
     kin_flagB = from->kin_flagB;
     kin_thresh = from->kin_thresh;
+    nrPointingAtMe=1;     //Eli added this
 
 	from->nrPointingAtMe++;
     nucleotides=(int)from->genome.size();
@@ -118,16 +120,16 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
     
     if(((double)rand()/(double)RAND_MAX) <.1){
         do{
-        kin_flagR = kin_flagR + get_random(-60, 60);
+        kin_flagR = kin_flagR + get_random(-160, 160);
         }while(kin_flagR > 255 && kin_flagR < 0);
         do{
-            kin_flagG = kin_flagG + get_random(-60, 60);
+            kin_flagG = kin_flagG + get_random(-160, 160);
         }while(kin_flagG > 255 && kin_flagG < 0);
         do{
-            kin_flagB = kin_flagB + get_random(-60, 60);
+            kin_flagB = kin_flagB + get_random(-160, 160);
         }while(kin_flagB > 255 && kin_flagB < 0);
             
-        kin_thresh = kin_thresh + get_random(-.1, .1);
+        kin_thresh = kin_thresh + get_random(-.3, .3);
         if(kin_thresh<0)
             kin_thresh = 0;
         else if (kin_thresh>1)

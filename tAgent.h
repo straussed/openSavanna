@@ -52,6 +52,7 @@ public:
     double kin_flagB;
     double kin_thresh;
     double get_random(double min, double max);
+    int get_distance(tAgent *A1, tAgent *A2, int cd);
     
 	tAgent();
 	~tAgent();

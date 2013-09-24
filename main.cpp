@@ -20,8 +20,8 @@ double perSiteMutationRate=0.005;
 int update=0;
 int repeats=1;
 int maxAgent=1000;
-int ifood = 1000;
-int maxFood = 2000;
+int ifood = 4000;
+int maxFood = 220;
 int totalGenerations=100;
 int successfull=0;
 
@@ -59,6 +59,7 @@ char     *endptr;                /*  for strtol()              */
 
 void setupBroadcast(void);
 void doBroadcast(string data);
+int get_distance(tAgent* A1, tAgent* A2, int cd);
 
 int main(int argc, char *argv[])
 {
@@ -88,6 +89,7 @@ int main(int argc, char *argv[])
         for(j=0;j<yDim;j++){
             area[i][j]=_empty;
             who[i][j]=NULL;
+            preyWho[i][j]=NULL;
             if(randDouble<0.01)
                 area[i][j]=_wall;
 //            else
@@ -136,10 +138,10 @@ int main(int argc, char *argv[])
         //agent[i]->showPhenotype();
 	}
    
-    //Add prey items based on maxFood
+    //Add prey items based on iFood
     for(int i=0;i<food.size();i++){
 		food[i]=new prey;
-        food[i]->inherit(masterPrey,.01,0);
+        food[i]->inherit(masterPrey,0.01,0);
         do{
             food[i]->xPos=rand()%xDim;
             food[i]->yPos=rand()%yDim;
@@ -153,7 +155,7 @@ int main(int argc, char *argv[])
 	masterAgent->nrPointingAtMe--;
 	cout<<"setup complete"<<endl;
     while(agent.size()>0)
-    //while(update<5000)    
+    //while(update<50000)
     {
         update++;
         i=0;
@@ -172,10 +174,12 @@ int main(int argc, char *argv[])
             else{
                 //do agent
                 //make inputs
+                area[agent[i]->xPos][agent[i]->yPos]=_empty;
+                who[agent[i]->xPos][agent[i]->yPos]=NULL;
+                int localDist=0;
+                if(who[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])
+                    localDist=get_distance(agent[i], who[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]], 0);
                 for(j=0;j<4;j++){
-                    area[agent[i]->xPos][agent[i]->yPos]=_empty;
-                    who[agent[i]->xPos][agent[i]->yPos]=NULL;
-                    
                     // put agent's current facing into its sensors
                     agent[i]->states[0]=agent[i]->direction&1;
                     agent[i]->states[1]=(agent[i]->direction>>1)&1;
@@ -183,11 +187,15 @@ int main(int argc, char *argv[])
                     agent[i]->states[2]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])&1;
                     agent[i]->states[3]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>1)&1;
                     agent[i]->states[4]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>2)&1;
+                    if(localDist>10)
+                        agent[i]->states[5]=0;
+                    else
+                        agent[i]->states[5]=1;
                     //update states
                     agent[i]->updateStates();
                 }
                 //evaluate actions
-                action=((agent[i]->states[5]&1)<<2)+((agent[i]->states[6]&1)<<1)+(agent[i]->states[7]&1);
+                action=((agent[i]->states[6]&1)<<2)+((agent[i]->states[7]&1)<<1)+(agent[i]->states[8]&1);
                 //action=rand()&3;
                 switch(action){
                     case 0: // nop
@@ -199,55 +207,28 @@ int main(int argc, char *argv[])
                         agent[i]->direction=(agent[i]->direction-1)&3;
                         break;
                     case 3: //move forward. If food in front, eat food and remain in same position
-                        int targ_x = agent[i]->xPos+xm[agent[i]->direction];
-                        int targ_y = agent[i]->yPos+ym[agent[i]->direction];
+                        int targ_x = (agent[i]->xPos+xm[agent[i]->direction])&(xDim-1);
+                        int targ_y = (agent[i]->yPos+ym[agent[i]->direction])&(yDim-1);
                         
                         switch(area[targ_x][targ_y]){
                             case _food:
-                                agent[i]->food++;
-                                cout << preyWho[targ_x][targ_y] << endl;
-                                cout<<"prey location: "<<targ_x<<", "<<targ_y<<endl<<endl;
-                                cout<<"agent location: "<<agent[i]->xPos<<", "<<agent[i]->yPos<<endl<<endl;
-                                
-                                preyWho[targ_x][targ_y]->capacity--;
-                                if(preyWho[targ_x][targ_y]->capacity == 0){
-                                    //when a carcass is depleted.
-                                    for(int z =0; z < food.size();z++){
-                                        if(food[z]->capacity == 0){
-                                            food.erase(food.begin()+z);
-                                            area[food[z]->xPos][food[z]->yPos]=_empty;
-                                            preyWho[food[z]->xPos][food[z]->yPos]=NULL;
-                                            //break;
-                                        }
-                                    }
-                                    
-                                    //preyWho[targ_x][targ_y]=NULL;
-                                    //area[targ_x][targ_y]=_empty;
-
+                                if(preyWho[targ_x][targ_y]->capacity>0){
+                                    agent[i]->food++;
+                                    preyWho[targ_x][targ_y]->capacity--;
                                 }
 
                                         
                                 if(agent[i]->food>=5){
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
-                                    offspring->xPos=agent[i]->xPos+xm[agent[i]->direction-2];
-                                    offspring->yPos=agent[i]->yPos-ym[agent[i]->direction-2];
+                                    offspring->xPos=agent[i]->xPos;//+xm[agent[i]->direction-2];
+                                    offspring->yPos=agent[i]->yPos;//-ym[agent[i]->direction-2];
                                     offspring->direction=rand()&3;
                                     agent[i]->food-=5;
                                     birth.push_back(offspring);
-                                    area[offspring->xPos][offspring->yPos]=_agent;
-                                    who[offspring->xPos][offspring->yPos]=offspring;
-                                    //After reproducing, there is a chance of death
-                                    if(randDouble<0.01){
-                                        //death of an agent
-                                        who[agent[i]->xPos][agent[i]->yPos]=NULL;
-                                        area[agent[i]->xPos][agent[i]->yPos]=_empty;
-                                        agent[i]->nrPointingAtMe--;
-                                        if(agent[i]->nrPointingAtMe==0)
-                                            delete agent[i];
-                                        agent.erase(agent.begin()+i);
-                                    }
-
+                                    //area[offspring->xPos][offspring->yPos]=_agent;
+                                    //who[offspring->xPos][offspring->yPos]=offspring;
+                                    
                             
                                 }
                                 break;
@@ -267,61 +248,78 @@ int main(int argc, char *argv[])
         }
         
         //Go through prey and do stuff
-        j = 0;
-        preyBirth.clear();
-        while(j<food.size()){
-            //prey reproduce, but only up to a certain point
-            if(food.size()<maxFood){
-                if(((update - (food[j]->born))+1)%(food[j]->reproRate) ==0){
-                    prey *preyOffspring = new prey;
-                    //cout<<"born"<<endl;
-                    preyOffspring->inherit(food[j],0.01,update);
-                    //preyOffspring->capacity = preyOffspring->maxCapacity;
-                    do{
-                        preyOffspring->xPos=rand()%xDim;
-                        preyOffspring->yPos=rand()%yDim;
-                        
-                    } while(area[preyOffspring->xPos][preyOffspring->yPos]!=_empty);
-                    preyBirth.push_back(preyOffspring);
-                    area[preyOffspring->xPos][preyOffspring->yPos]=_food;
-                    preyWho[preyOffspring->xPos][preyOffspring->yPos]=preyOffspring;
-                    
-                }
-
+        j = food.size()-1;
+        while(j>0){
+            if(food[j]->capacity<=0){
+                area[food[j]->xPos][food[j]->yPos]=_empty;
+                preyWho[food[j]->xPos][food[j]->yPos]=NULL;
+                delete food[j];
+                food.erase(food.begin()+j);
             }
-            //            //kill old prey
-//            if((update - food[j]->born) > food[j]->lifespan){
-//                area[food[j]->xPos][food[j]->yPos] = _empty;
-//                delete preyWho[food[j]->xPos][food[j]->yPos];
-//                //delete food[j];
-//                food.erase(food.begin()+j);
-//                cout<<"killed"<<endl;
-//            }
-            //cout<<j<<endl;
+            j--;
+        }
+        j= 0;
+        while(j < food.size()) {
+            area[food[j]->xPos][food[j]->yPos]=_empty;
+            preyWho[food[j]->xPos][food[j]->yPos]=NULL;
+            //cout<<food[j]->xPos<<" "<<food[j]->yPos<<endl;
+            //cout<<food[j]->xPos+xm[food[j]->direction]<<" "<<food[j]->yPos+ym[food[j]->direction]<<endl;
+            for(k=0;k<4;k++){
+                // put prey's current facing into its sensors
+                food[j]->states[0]=food[j]->direction&1;
+                food[j]->states[1]=(food[j]->direction>>1)&1;
+                food[j]->states[2]=(area[food[j]->xPos+xm[food[j]->direction]][food[j]->yPos+ym[food[j]->direction]])&1;
+                food[j]->states[3]=(area[food[j]->xPos+xm[food[j]->direction]][food[j]->yPos+ym[food[j]->direction]]>>1)&1;
+                food[j]->states[4]=(area[food[j]->xPos+xm[food[j]->direction]][food[j]->yPos+ym[food[j]->direction]]>>2)&1;
+                //update states
+                food[j]->updateStates();
+            }
+            
+            //evaluate actions
+            action=((food[j]->states[6]&1)<<2)+((food[j]->states[7]&1)<<1)+(food[j]->states[8]&1);
+            switch(action){
+                case 0: // nop
+                    break;
+                case 1: // turn left
+                    food[j]->direction=(food[j]->direction+1)&3;
+                    break;
+                case 2: // turn right
+                    food[j]->direction=(food[j]->direction-1)&3;
+                    break;
+                case 3: //move forward if space is open
+                    if(area[food[j]->xPos+xm[food[j]->direction]][food[j]->yPos+ym[food[j]->direction]] == _empty){
+                        food[j]->xPos+=xm[food[j]->direction];
+                        food[j]->yPos+=ym[food[j]->direction];
+                        break;
+                    }
+                    else break;
+            }
+            area[food[j]->xPos][food[j]->yPos]=_food;
+            preyWho[food[j]->xPos][food[j]->yPos]=food[j];
             j++;
-            //cout<<"end"<<endl;
+        }
+        preyBirth.clear();
+        while(food.size()+preyBirth.size()<maxFood){
+            j=rand()%food.size();
+            {
+                prey *preyOffspring = new prey;
+                preyOffspring->inherit(food[j],0.01,update);
+                //preyOffspring->capacity = preyOffspring->maxCapacity;
+                do{
+                    preyOffspring->xPos=rand()%xDim;
+                    preyOffspring->yPos=rand()%yDim;
+                    
+                } while(area[preyOffspring->xPos][preyOffspring->yPos]!=_empty);
+                preyBirth.push_back(preyOffspring);
+                area[preyOffspring->xPos][preyOffspring->yPos]=_food;
+                preyWho[preyOffspring->xPos][preyOffspring->yPos]=preyOffspring;
+                
+            }
         }
 
         //add newborns to population
         agent.insert(agent.end(), birth.begin(), birth.end());
         food.insert(food.end(), preyBirth.begin(), preyBirth.end());
-        //cout<<food.size()<<endl;
-////        //add food to maintain prey
-//        if(food.size() <= 2000){
-//            for(i=0;i<10;i++){
-//                x=2+(rand()%(xDim-4));
-//                y=2+(rand()%(yDim-4));
-//                if(area[x][y]==_empty){
-//                    area[x][y]=_food;
-//                    food.push_back(new prey);
-//                    preyWho[x][y] = food.back();
-//                }
-//            }
-//        }
-        //cout<<update<<endl;
-        //cout<<food.size()<<endl;
-        //cout<<agent.size()<<endl;
-        //*
         if((update&15)==0){
             //doBroadcast("a c string");
             string S;
@@ -336,16 +334,6 @@ int main(int argc, char *argv[])
                             G = who[i][j]->kin_flagG;
                             B = who[i][j]->kin_flagB;
                             sprintf(line,"%i,%i,%i,%i,%i;",i,j,R,G,B); break;
-//                            if(who[i][j]->kin_flag <= .2)
-//                                sprintf(line,"%i,%i,255,0,0;",i,j);
-//                            else if (who[i][j]->kin_flag <= .4)
-//                                sprintf(line,"%i,%i,255,0,255;",i,j);
-//                            else if (who[i][j]->kin_flag <= .6)
-//                                sprintf(line,"%i,%i,0,0,255;",i,j);
-//                            else if (who[i][j]->kin_flag <= .8)
-//                                sprintf(line,"%i,%i,255,215,0;",i,j);
-//                            else
-//                                sprintf(line,"%i,%i,0,255,255;",i,j);
                     
                         case _wall: sprintf(line,"%i,%i,255,255,255;",i,j); break;
                         case _empty: break;
@@ -358,6 +346,17 @@ int main(int argc, char *argv[])
          //*/
         if((update&127)==0){
             cout<<update<<" "<<(int)agent.size()<<endl;
+        }
+        
+        if(update == 15000){
+            int distances[agent.size()][agent.size()];
+            for (i = 0; i < agent.size(); i++){
+                for (j =0; j < agent.size();j++) {
+                    distances[i][j] = get_distance(agent[i],agent[j],0);
+                    cout<<distances[i][j]<<endl;
+                }
+            }
+        
         }
     }
     /*
@@ -397,6 +396,18 @@ void setupBroadcast(void)
 		fprintf(stderr, "ECHOSERV: Error calling listen()\n");
 		exit(EXIT_FAILURE);
     }
+    
+}
+
+int get_distance(tAgent *A1, tAgent *A2, int cd) {
+    // Returns pedigree distance between A1 and A2
+    if(A1 == A2)
+        return 0;
+    else if((A1->ancestor == A2) || (A2->ancestor == A1)) {
+        return cd + 1;}
+    else if(A1->born >= A2->born) {return get_distance(A1->ancestor, A2, cd+1);}
+    else {return get_distance(A1, A2->ancestor, cd+1);}
+    
     
 }
 

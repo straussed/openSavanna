@@ -33,7 +33,7 @@ public:
 	
 	prey *ancestor;
 	unsigned int nrPointingAtMe;
-	//unsigned char states[maxNodes],newStates[maxNodes];
+	unsigned char states[maxNodes],newStates[maxNodes];
 	double fitness,convFitness;
 	vector<double> fitnesses;
     int maxCapacity = 5;
@@ -57,11 +57,11 @@ public:
 //	void loadAgentWithTrailer(char* filename);
 	void setupPhenotype(void);
 	void inherit(prey *from,double mutationRate,int theTime);
-//	unsigned char * getStatesPointer(void);
+	unsigned char * getStatesPointer(void);
 	void updateStates(void);
-//	void resetBrain(void);
+	void resetBrain(void);
 	void ampUpStartCodons(void);
-//	void showBrain(void);
+	void showBrain(void);
 	void showPhenotype(void);
 //	void saveToDot(char *filename);
 	//void saveToDotFullLayout(char *filename);

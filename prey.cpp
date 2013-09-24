@@ -143,5 +143,32 @@ void prey::ampUpStartCodons(void){
 			genome[j+k]=rand()&255;
 	}
 }
+
+unsigned char * prey::getStatesPointer(void){
+	return states;
+}
+
+void prey::resetBrain(void){
+	for(int i=0;i<maxNodes;i++){
+		states[i]=0;
+    }
+}
+
+void prey::updateStates(void){
+    int i;
+    for(i=0;i<hmmus.size();i++)
+        hmmus[i]->update(&states[0],&newStates[0],&nodeMap[0]);
+    for(i=0;i<maxNodes;i++){
+        states[i]=newStates[i];
+        newStates[i]=0;
+    }
+}
+
+void prey::showBrain(void){
+	for(int i=0;i<maxNodes;i++)
+		cout<<(int)states[i];
+	cout<<endl;
+}
+
 //
 //
