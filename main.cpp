@@ -219,6 +219,8 @@ int main(int argc, char *argv[])
                         switch(area[targ_x][targ_y]){
                             case _food:
                                 if(preyWho[targ_x][targ_y]->capacity>0){
+                                    if(preyWho[targ_x][targ_y]->capacity == preyWho[targ_x][targ_y]->maxCapacity)
+                                        agent[i]->food = agent[i]->food-1;
                                     agent[i]->food++;
                                     preyWho[targ_x][targ_y]->capacity--;
                                 }
@@ -287,7 +289,7 @@ int main(int argc, char *argv[])
             if(food[j]->capacity < food[j]->maxCapacity)
                 action = 0;
             else
-                action=((food[j]->states[6]&1)<<2)+((food[j]->states[7]&1)<<1)+(food[j]->states[8]&1);
+            action=((food[j]->states[6]&1)<<2)+((food[j]->states[7]&1)<<1)+(food[j]->states[8]&1);
             //action=rand()&7;
             //printf("%i\n",food[j]->hmmus.size());
             switch(action){
