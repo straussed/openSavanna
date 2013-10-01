@@ -8,6 +8,24 @@
 
 #include "prey.h"
 
+prey::prey(){
+	int i;
+	nrPointingAtMe=1;
+	ancestor=NULL;
+	for(i=0;i<maxNodes;i++){
+		states[i]=0;
+		newStates[i]=0;
+        nodeMap[i]=(unsigned char) i;
+	}
+	hmmus.clear();
+}
+
+prey::~prey(){
+	for(int i=0;i<hmmus.size();i++)
+		delete hmmus[i];
+    genome.clear();
+}
+
 //
 void prey::loadPrey(char* filename){
 	FILE *f=fopen(filename,"r+t");
@@ -134,7 +152,7 @@ void prey::ampUpStartCodons(void){
 	int i,j;
 	for(i=0;i<genome.size();i++)
 		genome[i]=rand()&255;
-	for(i=0;i<4;i++)
+	for(i=0;i<10;i++)
 	{
 		j=rand()%(genome.size()-100);
 		genome[j]=43;

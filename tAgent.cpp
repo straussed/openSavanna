@@ -117,7 +117,6 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 		genome.insert(genome.begin()+o,buffer.begin(),buffer.end());
       
 	}
-    
     if(((double)rand()/(double)RAND_MAX) <.1){
         do{
         kin_flagR = kin_flagR + get_random(-160, 160);
@@ -144,7 +143,6 @@ void tAgent::inherit(tAgent *from,double mutationRate,int theTime){
 		genome.erase(genome.begin()+s,genome.begin()+s+w);
 
 	}
-	setupPhenotype();
 	fitness=0.0;
 }
 void tAgent::setupPhenotype(void){

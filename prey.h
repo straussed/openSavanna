@@ -49,8 +49,8 @@ public:
 //    double kin_thresh;
 //    double get_random(double min, double max);
     
-//	tAgent();
-//	~tAgent();
+	prey();
+	~prey();
 	void setupRandomPrey(int nucleotides);
 //    //    virtual void setupNodeMap(void);
 	void loadPrey(char* filename);

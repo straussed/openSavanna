@@ -21,7 +21,7 @@ int update=0;
 int repeats=1;
 int maxAgent=1000;
 int ifood = 4000;
-int maxFood = 220;
+int maxFood = 220*3;
 int totalGenerations=100;
 int successfull=0;
 
@@ -108,11 +108,13 @@ int main(int argc, char *argv[])
     }
 	agent.resize(maxAgent);
     food.resize(ifood);
-	masterAgent=new tAgent;
-    masterPrey = new prey;
-//	masterAgent->setupRandomAgent(5000);
-    masterAgent->loadAgent((char*)"startGenome.txt");
-    masterPrey->loadPrey((char*)"startGenome.txt");
+	masterAgent=new tAgent();
+    masterPrey = new prey();
+	masterAgent->setupRandomAgent(5000);
+//    masterAgent->loadAgent((char*)"startGenome.txt");
+//    masterPrey->loadPrey((char*)"startGenome.txt");
+    masterPrey->setupRandomPrey(5000);
+    masterPrey->ampUpStartCodons();
     masterPrey->setupPhenotype();
 	masterAgent->setupPhenotype();
     masterAgent->showPhenotype();
@@ -121,8 +123,10 @@ int main(int argc, char *argv[])
 //    masterAgent->saveGenome(genomeFile);
 //    fclose(genomeFile);
 	for(i=0;i<agent.size();i++){
-		agent[i]=new tAgent;
+		agent[i]=new tAgent();
 		agent[i]->inherit(masterAgent,0.01,0);
+        agent[i]->ampUpStartCodons();
+        agent[i]->setupPhenotype();
         agent[i]->kin_flagR = agent[i]->get_random(0,255);
         agent[i]->kin_flagG = agent[i]->get_random(0,255);
         agent[i]->kin_flagB = agent[i]->get_random(0,255);
@@ -140,8 +144,10 @@ int main(int argc, char *argv[])
    
     //Add prey items based on iFood
     for(int i=0;i<food.size();i++){
-		food[i]=new prey;
+		food[i]=new prey();
         food[i]->inherit(masterPrey,0.01,0);
+        food[i]->ampUpStartCodons();
+        food[i]->setupPhenotype();
         do{
             food[i]->xPos=rand()%xDim;
             food[i]->yPos=rand()%yDim;
@@ -221,6 +227,7 @@ int main(int argc, char *argv[])
                                 if(agent[i]->food>=5){
                                     tAgent *offspring=new tAgent();
                                     offspring->inherit(agent[i], 0.01, update);
+                                    offspring->setupPhenotype();
                                     offspring->xPos=agent[i]->xPos;//+xm[agent[i]->direction-2];
                                     offspring->yPos=agent[i]->yPos;//-ym[agent[i]->direction-2];
                                     offspring->direction=rand()&3;
@@ -259,6 +266,7 @@ int main(int argc, char *argv[])
             j--;
         }
         j= 0;
+        if((update&3)!=0)
         while(j < food.size()) {
             area[food[j]->xPos][food[j]->yPos]=_empty;
             preyWho[food[j]->xPos][food[j]->yPos]=NULL;
@@ -276,7 +284,12 @@ int main(int argc, char *argv[])
             }
             
             //evaluate actions
-            action=((food[j]->states[6]&1)<<2)+((food[j]->states[7]&1)<<1)+(food[j]->states[8]&1);
+            if(food[j]->capacity < food[j]->maxCapacity)
+                action = 0;
+            else
+                action=((food[j]->states[6]&1)<<2)+((food[j]->states[7]&1)<<1)+(food[j]->states[8]&1);
+            //action=rand()&7;
+            //printf("%i\n",food[j]->hmmus.size());
             switch(action){
                 case 0: // nop
                     break;
@@ -290,6 +303,7 @@ int main(int argc, char *argv[])
                     if(area[food[j]->xPos+xm[food[j]->direction]][food[j]->yPos+ym[food[j]->direction]] == _empty){
                         food[j]->xPos+=xm[food[j]->direction];
                         food[j]->yPos+=ym[food[j]->direction];
+                        //printf(".");
                         break;
                     }
                     else break;
@@ -302,14 +316,16 @@ int main(int argc, char *argv[])
         while(food.size()+preyBirth.size()<maxFood){
             j=rand()%food.size();
             {
-                prey *preyOffspring = new prey;
+                prey *preyOffspring = new prey();
                 preyOffspring->inherit(food[j],0.01,update);
+                preyOffspring->setupPhenotype();
                 //preyOffspring->capacity = preyOffspring->maxCapacity;
                 do{
                     preyOffspring->xPos=rand()%xDim;
                     preyOffspring->yPos=rand()%yDim;
                     
                 } while(area[preyOffspring->xPos][preyOffspring->yPos]!=_empty);
+                preyOffspring->direction=rand()&3;
                 preyBirth.push_back(preyOffspring);
                 area[preyOffspring->xPos][preyOffspring->yPos]=_food;
                 preyWho[preyOffspring->xPos][preyOffspring->yPos]=preyOffspring;
@@ -328,11 +344,16 @@ int main(int argc, char *argv[])
             for(i=0;i<xDim;i++)
                 for(j=0;j<yDim;j++){
                     switch(area[i][j]&3){//change the 3 to add more cases
-                        case _food: sprintf(line,"%i,%i,34,139,34;",i,j); break;
+                        case _food:
+//                            sprintf(line,"%i,%i,34,139,34;",i,j); break;
+                            sprintf(line,"%i,%i,16,255,16;",i,j); break;
                         case _agent:
                             R = who[i][j]->kin_flagR;
                             G = who[i][j]->kin_flagG;
                             B = who[i][j]->kin_flagB;
+                            R=255;
+                            G=16;
+                            B=26;
                             sprintf(line,"%i,%i,%i,%i,%i;",i,j,R,G,B); break;
                     
                         case _wall: sprintf(line,"%i,%i,255,255,255;",i,j); break;
@@ -345,7 +366,7 @@ int main(int argc, char *argv[])
         }
          //*/
         if((update&127)==0){
-            cout<<update<<" "<<(int)agent.size()<<endl;
+            cout<<update<<" "<<(int)agent.size()<<" "<<(int)food.size()<<endl;
         }
         
         if(update == 15000){
