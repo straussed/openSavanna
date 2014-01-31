@@ -24,8 +24,7 @@ int ifood = 220;
 int maxFood = 220*3;
 int totalGenerations=100;
 int successfull=0;
-double vis = 1;  //reliability of vision
-int vision_range = 5;
+int vis = 1;  //reliability of vision
 
 int xm[4]={0,1,0,-1};
 int ym[4]={-1,0,1,0};
@@ -85,9 +84,6 @@ int main(int argc, char *argv[])
     
     
     F = fopen("rDOK.txt", "w+t");
-    
-    //takes argument from command line
-    vision_range = atoi(argv[3]);
     
     for(int q = 0; q <= 500; q++){
         rDOK[q] = 0;
@@ -191,7 +187,6 @@ int main(int argc, char *argv[])
     //while(update<50000)
     {
         update++;
-        i = 0;
         birth.clear();
         //run through predators and do stuff
         while(i<agent.size()){
@@ -219,42 +214,43 @@ int main(int argc, char *argv[])
                     agent[i]->states[0]=agent[i]->direction&1;
                     agent[i]->states[1]=(agent[i]->direction>>1)&1;
                     //vision
-                    bool done = false;
-                    int w = 1;
+//                    bool done = 0;
+//                    int w = 1;
+//                    do {
+//                         unsigned char looked_at = area[agent[i]->xPos+ xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]];
+//                        
+//                        if (looked_at != _empty){
+//                            if(looked_at == _wall){
+//                                agent[i]->states[2]=(looked_at)&1;
+//                                agent[i]->states[3]=(looked_at>>1)&1;
+//                                agent[i]->states[4]=(looked_at>>2)&1;
+//                                break;
+//                            }
+//                            if(looked_at != _wall && randDouble <= vis){
+//                                agent[i]->states[2]=(looked_at)&1;
+//                                agent[i]->states[3]=(looked_at>>1)&1;
+//                                agent[i]->states[4]=(looked_at>>2)&1;
+//                                break;
+//                            }
+//                        }
+//                        
+//                        
+//                        
+//                        if (w >= 1){
+//                            agent[i]->states[2]=_empty&1;
+//                            agent[i]->states[3]=(_empty>>1)&1;
+//                            agent[i]->states[4]=(_empty>>2)&1;
+//                            break;
+//                            
+//                        }
+//                        w += 1;
+//                        
+//                    } while (done == 0);
                     
+                    agent[i]->states[2]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])&1;
+                    agent[i]->states[3]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>1)&1;
+                    agent[i]->states[4]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>2)&1;
                     
-                    agent[i]->states[2]=_empty&1;
-                    agent[i]->states[3]=(_empty>>1)&1;
-                    agent[i]->states[4]=(_empty>>2)&1;
-                    
-                    do {
-                         unsigned char looked_at = area[agent[i]->xPos+ w*xm[agent[i]->direction]][agent[i]->yPos+w*ym[agent[i]->direction]];
-                        
-                        if (looked_at != _empty){
-                            if(looked_at == _wall){
-                                agent[i]->states[2]=(looked_at)&1;
-                                agent[i]->states[3]=(looked_at>>1)&1;
-                                agent[i]->states[4]=(looked_at>>2)&1;
-                            }
-                            else{
-                                if(randDouble <= vis){
-                                    agent[i]->states[2]=(looked_at)&1;
-                                    agent[i]->states[3]=(looked_at>>1)&1;
-                                    agent[i]->states[4]=(looked_at>>2)&1;
-
-                                }
-                            
-                            }
-                            break;
-                        }
-                        
-                        w++;
-                    } while (w <= vision_range);
-                    
-//                    agent[i]->states[2]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]])&1;
-//                    agent[i]->states[3]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>1)&1;
-//                    agent[i]->states[4]=(area[agent[i]->xPos+xm[agent[i]->direction]][agent[i]->yPos+ym[agent[i]->direction]]>>2)&1;
-//                    
                     if(localDist>10)
                         agent[i]->states[5]=0;
                     else
