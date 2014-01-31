@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
                 switch(action){
                     case 0: // nop
                         break;
-                    case 1: // turn left
+                    case 1: // turn laft
                         agent[i]->direction=(agent[i]->direction+1)&3;
                         break;
                     case 2: // turn right
